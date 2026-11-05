@@ -1,5 +1,5 @@
 {
-  "name": "canadian-breach-assessor",
+  "name": "canadian-privacy-breach-assessor",
   "private": true,
   "version": "0.1.0",
   "description": "Open source, offline-first privacy breach assessor for Canadian organisations: PIPEDA, Quebec Law 25 and Alberta PIPA decisions, draft notices and a breach record log.",
