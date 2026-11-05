@@ -3,8 +3,8 @@
 import { deflateSync } from "node:zlib";
 import { writeFileSync } from "node:fs";
 
-const BG = [0x0b, 0x10, 0x17];
-const MARK = [0x4f, 0xb3, 0xff];
+const BG = [0x0d, 0x11, 0x17];
+const MARK = [0x58, 0xa6, 0xff];
 const SS = 4; // supersampling per axis
 
 function crc32(buf) {

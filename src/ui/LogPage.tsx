@@ -6,6 +6,7 @@ import { Area, Check, Text } from "./fields";
 import { downloadText, today } from "./download";
 import { Notices } from "./Notices";
 import { Results, VerdictBadge } from "./Results";
+import { overallVerdict } from "../engine/assess";
 
 const LAW_SHORT = { pipeda: "PIPEDA", quebec: "Quebec", alberta: "Alberta" } as const;
 
@@ -81,9 +82,7 @@ export function LogPage({ onEdit }: { onEdit: (rec: BreachRecord) => void }) {
       <header className="page-head">
         <div>
           <h2>Breach record log</h2>
-          <p className="lede">
-            Every breach, reported or not. PIPEDA: keep each record 24 months after you determine the breach occurred. Quebec: keep each register entry at least 5 years after you became aware of it.
-          </p>
+          <p className="lede">Every breach, reported or not. Stored only in this browser.</p>
         </div>
         <div className="toolbar no-print">
           <button onClick={() => downloadText(`breach-log-${today()}.csv`, toCsv(records), "text/csv")} disabled={!records.length}>
@@ -132,13 +131,13 @@ export function LogPage({ onEdit }: { onEdit: (rec: BreachRecord) => void }) {
                     {rec.input.incident.becameAware && <div className="small">Aware {formatDate(rec.input.incident.becameAware)}</div>}
                   </td>
                   <td>
-                    {rec.result.laws
-                      .filter((l) => l.applicability !== "not-applicable")
-                      .map((l) => (
-                        <div key={l.law} className="law-line">
-                          <span className="small">{LAW_SHORT[l.law]}</span> <VerdictBadge verdict={l.verdict} />
-                        </div>
-                      ))}
+                    <VerdictBadge verdict={overallVerdict(rec.result)} />
+                    <div className="small">
+                      {rec.result.laws
+                        .filter((l) => l.applicability !== "not-applicable")
+                        .map((l) => LAW_SHORT[l.law])
+                        .join(", ") || "No law in this tool applies"}
+                    </div>
                   </td>
                   <td className="small">
                     {s.opcReportedOn && <div>OPC {formatDate(s.opcReportedOn)}</div>}
@@ -176,11 +175,10 @@ export function LogPage({ onEdit }: { onEdit: (rec: BreachRecord) => void }) {
           </section>
         ))}
 
-      <section className="backup no-print">
-        <h2>Backup and restore</h2>
-        <p>
-          Your log exists only in this browser. Clearing site data, or using another device, means it's gone, so download a backup regularly and keep it somewhere your
-          organisation controls. The backup file contains the personal information you entered: store it as carefully as the breach records themselves.
+      <details className="backup no-print">
+        <summary>Backup, restore and erase</summary>
+        <p className="small">
+          The log lives only in this browser: clearing site data deletes it. Download a backup regularly. It contains the personal information you entered, so store it securely.
         </p>
         <div className="toolbar">
           <button onClick={() => downloadText(`breach-assessor-backup-${today()}.json`, JSON.stringify(toBackup(records), null, 2), "application/json")}>Download backup</button>
@@ -207,7 +205,7 @@ export function LogPage({ onEdit }: { onEdit: (rec: BreachRecord) => void }) {
             Erase all data
           </button>
         </div>
-      </section>
+      </details>
     </div>
   );
 }

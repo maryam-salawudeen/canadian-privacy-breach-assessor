@@ -9,12 +9,28 @@ import { Results } from "./Results";
 import { DataStep, IncidentStep, MisuseStep, OrgStep, ResponseStep, ScopeStep, type StepProps } from "./Steps";
 
 const STEPS: { title: string; blurb: string; body: (p: StepProps) => React.ReactNode }[] = [
-  { title: "Organisation", blurb: "Who you are decides which laws can apply.", body: (p) => <OrgStep {...p} /> },
-  { title: "Who is affected", blurb: "Where the affected people live matters as much as where you are.", body: (p) => <ScopeStep {...p} /> },
-  { title: "What happened", blurb: "The facts that go into every notice and the record log.", body: (p) => <IncidentStep {...p} /> },
-  { title: "Information involved", blurb: "The first factor: how sensitive is it?", body: (p) => <DataStep {...p} /> },
-  { title: "Likelihood of misuse", blurb: "The second factor: how likely is it to be misused?", body: (p) => <MisuseStep {...p} /> },
-  { title: "Your response", blurb: "What you have done, and what people can do.", body: (p) => <ResponseStep {...p} /> }
+  {
+    title: "Organisation",
+    blurb: "Who you are and where the affected people live decide which laws apply.",
+    body: (p) => (
+      <>
+        <OrgStep {...p} />
+        <ScopeStep {...p} />
+      </>
+    )
+  },
+  {
+    title: "What happened",
+    blurb: "The facts, and how sensitive the information is.",
+    body: (p) => (
+      <>
+        <IncidentStep {...p} />
+        <DataStep {...p} />
+      </>
+    )
+  },
+  { title: "Likelihood of misuse", blurb: "How likely is the information to be misused?", body: (p) => <MisuseStep {...p} /> },
+  { title: "Your response", blurb: "What you have done, and what people can do. Leave blank what you don't have yet.", body: (p) => <ResponseStep {...p} /> }
 ];
 const RESULTS = STEPS.length;
 
@@ -79,7 +95,7 @@ export function AssessPage({ editing, onSaved }: { editing?: BreachRecord; onSav
           {[...STEPS.map((s) => s.title), "Decision and notices"].map((t, i) => (
             <li key={t}>
               <button className={i === step ? "current" : i < step ? "visited" : ""} aria-current={i === step ? "step" : undefined} onClick={() => go(i)}>
-                <span className="num">{String(i + 1).padStart(2, "0")}</span>
+                <span className="num">{i + 1}</span>
                 {t}
               </button>
             </li>

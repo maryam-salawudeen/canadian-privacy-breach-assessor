@@ -1,8 +1,7 @@
 export function Disclaimer() {
   return (
     <p className="disclaimer" role="note">
-      <b>Informational only, not legal advice.</b> This tool helps you structure a breach assessment. It can't know every fact or account for every change in the law. When in doubt it
-      leans towards reporting. Confirm your decision with your privacy officer or a lawyer.
+      <b>Informational only, not legal advice.</b> When unsure, this tool leans towards reporting. Confirm decisions with your privacy officer or a lawyer.
     </p>
   );
 }

@@ -36,8 +36,8 @@ export default defineConfig({
         start_url: "/#assess",
         scope: "/",
         display: "standalone",
-        background_color: "#0B1017",
-        theme_color: "#111821",
+        background_color: "#0D1117",
+        theme_color: "#151B23",
         categories: ["business", "productivity", "utilities"],
         icons: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png" },

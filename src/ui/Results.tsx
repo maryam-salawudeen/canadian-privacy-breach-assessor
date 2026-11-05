@@ -16,6 +16,11 @@ const HEADLINE: Record<Verdict, string> = {
   "not-indicated": "Reporting is not indicated by your answers"
 };
 
+const LEVEL: Record<string, string> = { negligible: "Very unlikely", low: "Low", moderate: "Moderate", high: "High" };
+
+/** First sentence only, so the summary stays short; the full text is under "Reasons and sources". */
+const firstSentence = (s: string) => s.split(/(?<=\.)\s/)[0];
+
 export function VerdictBadge({ verdict }: { verdict?: Verdict }) {
   return <span className={`badge v-${verdict ?? "na"}`}>{verdictLabel(verdict)}</span>;
 }
@@ -41,34 +46,40 @@ function LawCard({ law }: { law: LawResult }) {
         <span className={`pill a-${law.applicability}`}>{APPLICABILITY[law.applicability]}</span>
         {!out && <VerdictBadge verdict={law.verdict} />}
       </header>
-      <details open={!out}>
-        <summary>Why this law {out ? "does not apply" : law.applicability === "applies" ? "applies" : "may apply"}</summary>
-        <Reasons items={law.applicabilityReasons} />
-      </details>
+
       {!out && (
-        <>
-          <h4>Decision and reasons</h4>
-          <Reasons items={law.verdictReasons} />
-          <h4>What to do</h4>
-          <ol className="obligations">
-            {law.obligations.map((o) => (
-              <li key={o.id} className={o.required ? "required" : "recommended"}>
-                <strong>{o.title}</strong>
-                <span className="tag">{o.required ? "Required" : "Recommended"}</span>
-                {o.deadline && (
-                  <p className="deadline">
-                    <b>When:</b> {o.deadline}
-                  </p>
-                )}
-                <p>
-                  {o.detail} <CiteLink cite={o.cite} />
-                </p>
-              </li>
-            ))}
-          </ol>
-          {law.retentionUntil && <p className="retention">Keep the record until at least <b>{formatDate(law.retentionUntil)}</b>.</p>}
-        </>
+        <ul className="todo">
+          {law.obligations.map((o) => (
+            <li key={o.id}>
+              <span className={o.required ? "tag required" : "tag"}>{o.required ? "Required" : "Recommended"}</span>
+              <span>
+                {o.title}
+                {o.deadline && <span className="when"> · {firstSentence(o.deadline)}</span>}
+              </span>
+            </li>
+          ))}
+          {law.retentionUntil && (
+            <li>
+              <span className="tag">Keep until</span>
+              <span>{formatDate(law.retentionUntil)}</span>
+            </li>
+          )}
+        </ul>
       )}
+
+      <details>
+        <summary>Reasons and sources</summary>
+        <h4>{out ? "Why it doesn't apply" : law.applicability === "applies" ? "Why it applies" : "Why it may apply"}</h4>
+        <Reasons items={law.applicabilityReasons} />
+        {!out && (
+          <>
+            <h4>Why this decision</h4>
+            <Reasons items={law.verdictReasons} />
+            <h4>What each step involves</h4>
+            <Reasons items={law.obligations.map((o) => ({ text: `${o.title}: ${o.detail}${o.deadline ? ` When: ${o.deadline}` : ""}`, cite: o.cite }))} />
+          </>
+        )}
+      </details>
     </article>
   );
 }
@@ -80,36 +91,14 @@ export function Results({ result }: { result: AssessmentResult }) {
   return (
     <section className="results">
       <div className={`headline v-${overall ?? "na"}`}>
-        <p className="eyebrow">Overall result</p>
         <h2>{overall ? HEADLINE[overall] : "None of the three laws in this tool applies"}</h2>
-        {overall && overall !== "not-indicated" && (
-          <p>
-            {reporting.map((l) => l.name).join(", ")}: report to the regulator{reporting.length > 1 ? "s" : ""} below.
-          </p>
-        )}
-        {overall === "not-indicated" && (
-          <p>This does not mean the breach is harmless. Record it, keep your reasoning, and reassess if anything new comes to light.</p>
-        )}
-        {!overall && <p>See the notes below for the laws that may cover you instead.</p>}
-      </div>
-
-      <div className="risk">
-        <div>
-          <p className="eyebrow">Sensitivity</p>
-          <p className={`level l-${r.sensitivity}`}>{r.sensitivity}</p>
-          <Reasons items={r.sensitivityReasons} />
-        </div>
-        <div>
-          <p className="eyebrow">Likelihood of misuse</p>
-          <p className={`level l-${r.probability}`}>{r.probability === "negligible" ? "very unlikely" : r.probability}</p>
-          <Reasons items={r.probabilityReasons} />
-        </div>
-      </div>
-      {r.foreseeableHarms.length > 0 && (
-        <p className="harms">
-          <b>Harms that could reasonably result:</b> {r.foreseeableHarms.join(", ")}.
+        {overall && overall !== "not-indicated" && <p>Report under {reporting.map((l) => l.name).join(", ")}.</p>}
+        {overall === "not-indicated" && <p>This does not mean the breach is harmless. Record it and reassess if anything new comes to light.</p>}
+        {!overall && <p>See “Also check” below for the laws that may cover you instead.</p>}
+        <p className="risk-line">
+          Sensitivity <b>{LEVEL[r.sensitivity]}</b> · Likelihood of misuse <b>{LEVEL[r.probability]}</b>
         </p>
-      )}
+      </div>
 
       {result.outOfScope.length > 0 && (
         <div className="callout">
@@ -123,7 +112,15 @@ export function Results({ result }: { result: AssessmentResult }) {
           <LawCard key={l.law} law={l} />
         ))}
       </div>
-      <p className="small">Assessed {new Date(result.assessedAt).toLocaleString("en-CA")}. Informational only, not legal advice.</p>
+
+      <details className="risk-details">
+        <summary>How the risk was rated</summary>
+        <h4>Sensitivity: {LEVEL[r.sensitivity]}</h4>
+        <Reasons items={r.sensitivityReasons} />
+        <h4>Likelihood of misuse: {LEVEL[r.probability]}</h4>
+        <Reasons items={r.probabilityReasons} />
+        {r.foreseeableHarms.length > 0 && <p>Harms that could reasonably result: {r.foreseeableHarms.join(", ")}.</p>}
+      </details>
     </section>
   );
 }

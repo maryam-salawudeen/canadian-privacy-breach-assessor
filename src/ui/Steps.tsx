@@ -1,3 +1,4 @@
+import type React from "react";
 import { DATA_CATEGORIES } from "../rules/dataCategories";
 import { cite } from "../rules/sources";
 import type { IncidentKind } from "../rules/types";
@@ -41,29 +42,44 @@ export function OrgStep({ input, set }: StepProps) {
         onChange={(province) => org({ province })}
         options={PROVINCES.map((p) => ({ value: p.code, label: p.name }))}
       />
-      {o.province === "QC" && o.type !== "public" && (
-        <Text label="Québec business number (NEQ), if any" value={o.quebecBusinessNumber} onChange={(quebecBusinessNumber) => org({ quebecBusinessNumber })} />
-      )}
       <Check
         label="We control this information"
         hint="Untick if you are a service provider holding it for a client. The organisation in control usually reports."
         checked={o.inControl}
         onChange={(inControl) => org({ inControl })}
       />
-      <h3>Who can answer the regulator's questions?</h3>
-      <div className="grid2">
-        <Text label="Name" value={o.contactName} onChange={(contactName) => org({ contactName })} />
-        <Text label="Title" value={o.contactTitle} onChange={(contactTitle) => org({ contactTitle })} />
-        <Text label="Email" type="email" value={o.contactEmail} onChange={(contactEmail) => org({ contactEmail })} />
-        <Text label="Phone" type="tel" value={o.contactPhone} onChange={(contactPhone) => org({ contactPhone })} />
-      </div>
-      <Text
-        label="Contact for affected people"
-        hint="A toll-free number or email address people can use to find out more. Required in notices to individuals."
-        value={o.publicContact}
-        onChange={(publicContact) => org({ publicContact })}
-      />
+      <More title="Contact details for the notices" filled={[o.contactName, o.contactEmail, o.contactPhone, o.publicContact, o.quebecBusinessNumber]}>
+        <p className="hint">Who can answer the regulator's questions</p>
+        <div className="grid2">
+          <Text label="Name" value={o.contactName} onChange={(contactName) => org({ contactName })} />
+          <Text label="Title" value={o.contactTitle} onChange={(contactTitle) => org({ contactTitle })} />
+          <Text label="Email" type="email" value={o.contactEmail} onChange={(contactEmail) => org({ contactEmail })} />
+          <Text label="Phone" type="tel" value={o.contactPhone} onChange={(contactPhone) => org({ contactPhone })} />
+        </div>
+        <Text
+          label="Contact for affected people"
+          hint="A toll-free number or email address people can use to find out more."
+          value={o.publicContact}
+          onChange={(publicContact) => org({ publicContact })}
+        />
+        {o.province === "QC" && o.type !== "public" && (
+          <Text label="Québec business number (NEQ), if any" value={o.quebecBusinessNumber} onChange={(quebecBusinessNumber) => org({ quebecBusinessNumber })} />
+        )}
+      </More>
     </>
+  );
+}
+
+/** Optional fields that only feed the notices, folded away until needed. */
+function More({ title, filled, children }: { title: string; filled: string[]; children: React.ReactNode }) {
+  const count = filled.filter((v) => v.trim()).length;
+  return (
+    <details className="more">
+      <summary>
+        {title} <span className="small">(optional{count ? `, ${count} filled` : ""})</span>
+      </summary>
+      <div className="more-body">{children}</div>
+    </details>
   );
 }
 
@@ -107,7 +123,6 @@ export function IncidentStep({ input, set }: StepProps) {
   const inc = (p: Partial<AssessmentInput["incident"]>) => set("incident", p);
   return (
     <>
-      <Text label="Short title for the log" placeholder="e.g. Misdirected payroll email" value={i.title} onChange={(title) => inc({ title })} />
       <MultiChoice<IncidentKind>
         legend="What happened to the information?"
         value={i.kinds}
@@ -126,7 +141,6 @@ export function IncidentStep({ input, set }: StepProps) {
         <Text label="Breach started" type="date" value={i.occurredFrom} onChange={(occurredFrom) => inc({ occurredFrom })} />
         <Text label="Breach ended" type="date" value={i.occurredTo} onChange={(occurredTo) => inc({ occurredTo })} />
       </div>
-      <Text label="If the dates are unknown, the approximate period" placeholder="e.g. Sometime in early March 2026" value={i.occurredApprox} onChange={(occurredApprox) => inc({ occurredApprox })} />
       <div className="grid2">
         <Text label="Date you became aware of it" hint="Quebec's register keeps entries 5 years from this date." type="date" value={i.becameAware} onChange={(becameAware) => inc({ becameAware })} />
         <Text label="Date you determined a breach occurred" hint="PIPEDA's 24-month record period runs from this date." type="date" value={i.determined} onChange={(determined) => inc({ determined })} />
@@ -138,12 +152,16 @@ export function IncidentStep({ input, set }: StepProps) {
         )}
       </div>
       <Check label="These numbers are estimates" checked={i.affectedApprox} onChange={(affectedApprox) => inc({ affectedApprox })} />
-      <Text
-        label="Other privacy regulators already notified"
-        hint="Quebec's notice asks whether a regulator outside Quebec has been told."
-        value={i.otherRegulators}
-        onChange={(otherRegulators) => inc({ otherRegulators })}
-      />
+      <More title="More details for the notices" filled={[i.title, i.occurredApprox, i.otherRegulators]}>
+        <Text label="Short title for the log" placeholder="e.g. Misdirected payroll email" value={i.title} onChange={(title) => inc({ title })} />
+        <Text label="If the dates are unknown, the approximate period" placeholder="e.g. Sometime in early March 2026" value={i.occurredApprox} onChange={(occurredApprox) => inc({ occurredApprox })} />
+        <Text
+          label="Other privacy regulators already notified"
+          hint="Quebec's notice asks whether a regulator outside Quebec has been told."
+          value={i.otherRegulators}
+          onChange={(otherRegulators) => inc({ otherRegulators })}
+        />
+      </More>
     </>
   );
 }
@@ -177,7 +195,7 @@ export function MisuseStep({ input, set }: StepProps) {
   return (
     <>
       <p className="lede">
-        These questions come from the OPC's probability-of-misuse questions and the OIPC Alberta's risk factors. "Don't know yet" is a fair answer: unknowns raise the risk until you resolve them.{" "}
+        "Don't know yet" is fine: unknown answers raise the risk until you resolve them.{" "}
         <CiteLink cite={cite("opc-guidance", "Part 6, \"Probability of Misuse\"")} /> <CiteLink cite={cite("oipc-ab-guidance", "Section C")} />
       </p>
       <Choice
@@ -239,7 +257,6 @@ export function ResponseStep({ input, set }: StepProps) {
   const res = (p: Partial<AssessmentInput["response"]>) => set("response", p);
   return (
     <>
-      <p className="lede">All three laws ask what you have done about it. Include dates. Leave blank what you don't have yet; the notices will show a [gap].</p>
       <Area label="Steps taken to contain the breach and reduce the risk of harm" value={r.containment} onChange={(containment) => res({ containment })} rows={4} />
       <Area label="Steps to prevent it happening again" hint="Quebec's notice asks for these with dates or expected time limits." value={r.prevention} onChange={(prevention) => res({ prevention })} rows={3} />
       <Area label="Steps affected people can take to protect themselves" value={r.individualSteps} onChange={(individualSteps) => res({ individualSteps })} rows={3} />
